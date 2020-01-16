@@ -1,0 +1,579 @@
+﻿@model DemoSite.Models.HomeModel
+@{
+    ViewBag.Title = "Home Page";
+}
+
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-header">
+                <div class="row">
+                    <div class="col-lg-4">
+                        <div class="form-group">
+                            <div class="form-label">
+                                <b>Search</b>
+                            </div>
+                            <div class="input-group">
+                                <span id="spanFilterDDL" class="input-group-prepend">
+                                    <select class="form-control" id="ddlFilter">       
+                                        <option value="reg_heading">Regulation Heading</option>
+                                        <option value="org_name">Organization Name</option>
+                                        <option value="org_website">Web Site</option>
+                                        <option value="chapter_name">Chapter Name</option>
+                                        <option value="subchapter_name">Sub Chapter Name</option>                                        
+                                    </select>
+                                </span>
+                                <input id="txtFilter" type="text" maxlength="100" class="form-control" />
+                                <span id="spanFilterButton" class="input-group-append">
+                                    <button type="button" class="btn btn-outline-dark" onclick="SetupWorkingList(); RenderData();">Filter&nbsp;<i class="fas fa-filter"></i></button>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-lg-8">
+
+                    </div>
+                    <div class="col-lg-2">
+                        <div class="form-group">
+                            <div class="form-label">
+                                <b>Page Size</b>
+                            </div>
+                            <select class="form-control" id="ddlPageSize" onchange="PageSizeChange(this);">
+                                <option value="20">20</option>
+                                <option value="30">30</option>
+                                <option value="40">40</option>
+                                <option value="50">50</option>
+                                <option value="60">60</option>
+                                <option value="70">70</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-lg-2">
+                        <div class="form-group">
+                            <div class="form-label">
+                                <b>Page Number</b>
+                            </div>
+                            <div class="input-group">
+                                <input type="number" id="txtPageNumber" class="form-control" />
+                                <span class="input-group-append">
+                                    <button type="button" class="btn btn-deepBlue" id="btnPageGo" onclick="ChangePage();">Go</button>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-12 table-responsive" style="height:500px;overflow:auto">
+                        <table class="table table-hover table-striped table-curved" style="border-collapse:collapse">
+                            <thead class="gridHeader text-center">
+                                <tr> 
+                                    <th id="threg_heading" class="addSort sortAsc w-25" onclick="SetSort(this);">Regulation Heading&nbsp;&nbsp;<i class="fas fa-angle-up d-none asc"></i><i class="fas fa-angle-down d-none"></i></th>
+                                    <th id="thorg_name" class="addSort" onclick="SetSort(this);">Organization Name&nbsp;&nbsp;<i class="fas fa-angle-up d-none asc"></i><i class="fas fa-angle-down d-none"></i></th>
+                                    <th id="thorg_website" class="addSort" onclick="SetSort(this);">Web Site&nbsp;&nbsp;<i class="fas fa-angle-up d-none asc"></i><i class="fas fa-angle-down d-none"></i></th>
+                                    <th id="thchapter_name" class="addSort" onclick="SetSort(this);">Chapter Name&nbsp;&nbsp;<i class="fas fa-angle-up d-none asc"></i><i class="fas fa-angle-down d-none"></i></th>
+                                    <th id="thsubchapter_name" class="addSort" onclick="SetSort(this);">Sub Chapter Name&nbsp;&nbsp;<i class="fas fa-angle-up d-none asc"></i><i class="fas fa-angle-down d-none"></i></th>                                    
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbData" class="text-center"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <br />
+                <div class="row">
+                    <div class="col-lg-12 text-right">
+                        <button type="button" class="btn btn-secondary" onclick="SelectPage(0);"><i class="fas fa-angle-double-left"></i>&nbsp;First</button>
+                        <button type="button" class="btn btn-secondary" onclick="SelectPage(--pageNum);"><i class="fas fa-angle-left"></i>&nbsp;Previous</button>
+                        <table border="0" class="d-inline" cellspacing="1">
+                            <tbody>
+                                <tr id="trPageRow" style="vertical-align:text-bottom" class="pagination pgItem" align="right"></tr>
+                            </tbody>
+                        </table>
+                        <button type="button" class="btn btn-secondary" onclick="SelectPage(++pageNum);">Next&nbsp;<i class="fas fa-angle-right"></i></button>
+                        <button type="button" class="btn btn-secondary" onclick="SelectPage(numPages - 1);">Last&nbsp;<i class="fas fa-angle-double-right"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="mdlOrgRule" tabindex="-1" role="dialog" aria-labelledby="hDialog" aria-hidden="true">
+    <div class="col-12">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="col-6">
+                        <h2 id="hDialog" class="text-deepBlue"><b>Regulation Details&nbsp;<i class="fas fa-clipboard-list"></i></b></h2>
+                    </div>
+                    <div class="col-6 text-right">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal" aria-label="Close"><i class="fas fa-times"></i></button>
+                    </div>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-lg-12 text-center">
+                            <b id="bRuleHeading"></b>
+                        </div>
+                    </div>
+                    <br />
+                    <br />
+                    <div class="row">
+                        <div class="col-lg-4">
+                            <div class="form-group">
+                                <div class="form-label">
+                                    <b>Organization Id</b>
+                                </div>
+                                <span id="spnOrgId"></span>
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="form-group">
+                                <div class="form-label">
+                                    <b>Organization Name</b>
+                                </div>
+                                <span id="spnOrgName"></span>
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="form-group">
+                                <div class="form-label">
+                                    <b>Organization Website</b>
+                                </div>
+                                <a id="aOrgWebsite"></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-4">
+                            <div class="form-group">
+                                <div class="form-label">
+                                    <b>Chapter</b>
+                                </div>
+                                <span id="spnChapter"></span>
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="form-group">
+                                <div class="form-label">
+                                    <b>Sub Chapter</b>
+                                </div>
+                                <span id="spnSubChapter"></span>
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="form-group">
+                                <div class="form-label">
+                                    <b>Promulgation Type</b>
+                                </div>
+                                <span id="spnPromType"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-4">
+                            <div class="form-group">
+                                <div class="form-label">
+                                    <b>Promulgation Action Type</b>
+                                </div>
+                                <span id="spnPromAction"></span>
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="form-group">
+                                <div class="form-label">
+                                    <b>Promulgation Effecive Date</b>
+                                </div>
+                                <span id="spnPromEffDate"></span>
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="form-group">
+                                <div class="form-label">
+                                    <b>Promulgation Expiration Date</b>
+                                </div>
+                                <span id="spnPromTermDate"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-4">
+                            <div class="form-group">
+                                <div class="form-label">
+                                    <b>Public Comment Term</b>
+                                </div>
+                                <span id="spnPublicCommentTerm"></span>
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="form-group">
+                                <div class="form-label">
+                                    <b>Public Comment Term Start Date</b>
+                                </div>
+                                <span id="spnPublicCommentEffDate"></span>
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="form-group">
+                                <div class="form-label">
+                                    <b>Public Comment Term End Date</b>
+                                </div>
+                                <span id="spnPublicCommentTermDate"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-4">
+                            <div class="form-group">
+                                <div class="form-label">
+                                    <b>Promulgation Filing Notice Date</b>
+                                </div>
+                                <span id="spnPromFileDate"></span>
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="form-group">
+                                <div class="form-label">
+                                    <b>Comment Date</b>
+                                </div>
+                                <span id="spnCommentDate"></span>
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="form-group">
+                                <div class="form-label">
+                                    <b>Notice Date</b>
+                                </div>
+                                <span id="spnNoticeDate"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    var ruleData = @Html.Raw(@Model.RegulationsJSON);
+    var workingRuleData = [];
+    var numPages = 0;
+    var pageNum = 0;
+    var pageSize = 0;
+    
+    $(document).ready(function () {
+        AddIdsToData();
+        SetupWorkingList();
+        RenderData();
+        BindTableScroll();
+    });
+
+    function AddIdsToData() {
+        for (var i = 0; i < ruleData.length; i++) {
+            ruleData[i].Id = i;
+        }
+    }
+
+    function RenderData() {
+        var tbData = document.getElementById('tbData');
+        var i = 0;
+        var index = 0;
+
+        tbData.innerHTML = '';
+        pageSize = parseInt(ddlPageSize.value);
+        numPages = GetNumPages();
+
+        if (numPages < (pageNum - 1)) {
+            pageNum = 0;
+            document.getElementById('txtPageNumber').value = 1;
+        }
+
+        i = pageSize * pageNum;
+
+        for (; i < workingRuleData.length; i++) {
+
+            if (index >= pageSize) {
+                break;
+            }
+
+            var row = document.createElement('tr');
+
+            index++;
+            row.insertCell().innerText = workingRuleData[i].reg_heading;
+            row.insertCell().innerText = workingRuleData[i].org_name;
+            row.insertCell().innerText = workingRuleData[i].org_website;
+            row.insertCell().innerText = workingRuleData[i].chapter_name;
+            row.insertCell().innerText = workingRuleData[i].subchapter_name;            
+            row.insertCell().innerHTML = '<button type="button" class="btn btn-deepBlue" onclick="ViewDetails(' + workingRuleData[i].Id + ');">View Details&nbsp;<i class="fas fa-search"></i></button>';
+            tbData.appendChild(row);
+        }
+
+        RenderPagination();
+    }
+
+    function RenderPagination() {
+        var trPageRow = document.getElementById('trPageRow');
+        var startPage = (pageNum <= 9) ? 1 : pageNum - 8;
+        var itteration = 0;
+
+        trPageRow.innerHTML = '';
+
+        for (var i = startPage; i <= numPages; i++) {
+            if (itteration > 9) {
+                break;
+            }
+
+            var cell = document.createElement('td');
+
+            if (i - 1 === pageNum) {
+                cell.innerHTML = '<button type="button" class="btn btn-secondary">' + i + '</button>';
+            }
+            else {
+                cell.innerHTML = '<button type="button" class="btn btn-outline-secondary" onclick="SelectPage(' + (i - 1) + ');">' + i + '</button>';
+            }
+
+            trPageRow.appendChild(cell);
+            itteration++;
+        }
+    }
+
+    function SetupWorkingList() {
+        ApplyFilter();
+        ApplySort();
+    }
+
+    function ApplyFilter() {
+        var ddlFilter = document.getElementById('ddlFilter');
+        var txtFilter = document.getElementById('txtFilter');
+        var selectedFilter = ddlFilter.value;
+        var filterValue = txtFilter.value;
+        var filterValueLength = filterValue.length;
+        var index = 0;
+
+        if (filterValue === '') {
+            workingRuleData = JSON.parse(JSON.stringify(ruleData));
+            return;
+        }
+
+        workingRuleData = [];
+
+        for (var i = 0; i < ruleData.length; i++) {  
+            if (filterValue.toUpperCase() === ruleData[i][selectedFilter].substr(0, filterValueLength).toUpperCase()) {
+                workingRuleData[index] = JSON.parse(JSON.stringify(ruleData[i]));
+                index++;
+            }           
+       
+        }
+    }
+
+    function SetSort(ctl) {
+        var sortControls = document.getElementsByClassName('addSort');
+
+        if (ctl.classList.toString().Has('sortAsc')) {
+            ctl.classList.add('sortDesc');
+            ctl.classList.remove('sortAsc');
+            for (var i = 0; i < ctl.childNodes.length; i++) {
+                if (ctl.childNodes[i].classList === undefined) {
+                    continue;
+                }
+                if (ctl.childNodes[i].classList.toString().Has('fa-angle-up')) {
+                    ctl.childNodes[i].classList.add('d-none');
+                }
+                if (ctl.childNodes[i].classList.toString().Has('fa-angle-down')) {
+                    ctl.childNodes[i].classList.remove('d-none');
+                }
+            }
+        }
+        else {
+            ctl.classList.add('sortAsc');
+            ctl.classList.remove('sortDesc');
+            for (var i = 0; i < ctl.childNodes.length; i++) {
+                if (ctl.childNodes[i].classList === undefined) {
+                    continue;
+                }
+                if (ctl.childNodes[i].classList.toString().Has('fa-angle-down')) {
+                    ctl.childNodes[i].classList.add('d-none');
+                }
+                if (ctl.childNodes[i].classList.toString().Has('fa-angle-up')) {
+                    ctl.childNodes[i].classList.remove('d-none');
+                }
+            }
+        }
+
+        for (var i = 0; i < sortControls.length; i++) {
+            if (sortControls[i] !== ctl) {
+                var oldClassName = sortControls[i].className;
+
+                sortControls[i].className = 'addSort';
+                if (oldClassName.Has('w-25')) {
+                    sortControls[i].classList.add('w-25');
+                }
+                for (var j = 0; j < sortControls[i].childNodes.length; j++) {
+                    if (sortControls[i].childNodes[j].classList === undefined) {
+                        continue;
+                    }
+                    if (sortControls[i].childNodes[j].classList.toString().Has('fa-')) {
+                        sortControls[i].childNodes[j].classList.add('d-none');
+                    }
+                }
+            }
+        }
+
+        SetupWorkingList();
+        RenderData();
+    }
+
+    function ApplySort() {
+        var sortAsc = document.getElementsByClassName('sortAsc').length > 0;
+        var ctl;
+
+        if (!sortAsc) {
+            ctl = document.getElementsByClassName('sortDesc')[0];
+        }
+        else {
+            ctl = document.getElementsByClassName('sortAsc')[0];
+        }
+
+        var selectedField = ctl.id.replace('th', '');
+
+        switch (selectedField) {
+            case 'reg_heading':
+                workingRuleData.sort(function (a, b) {
+                    return sortAsc ? a.reg_heading.localeCompare(b.reg_heading, undefined, { 'numeric': true }) : b.reg_heading.localeCompare(a.reg_heading, undefined, { 'numeric': true });
+                });
+                break;
+            case 'org_name':
+                workingRuleData.sort(function (a, b) {
+                    return sortAsc ? a.org_name.localeCompare(b.org_name) : b.org_name.localeCompare(a.org_name);
+                });
+                break;
+            case 'org_website':
+                workingRuleData.sort(function (a, b) {
+                    return sortAsc ? a.org_website.localeCompare(b.org_website) : b.org_website.localeCompare(a.org_website);
+                });
+                break;
+            case 'chapter_name':
+                workingRuleData.sort(function (a, b) {
+                    return sortAsc ? a.chapter_name.localeCompare(b.chapter_name) : b.chapter_name.localeCompare(a.chapter_name);
+                });
+                break;
+            case 'subchapter_name':
+                workingRuleData.sort(function (a, b) {
+                    return sortAsc ? a.subchapter_name.localeCompare(b.subchapter_name) : b.subchapter_name.localeCompare(a.subchapter_name);
+                });
+                break;           
+        }
+    }
+
+    function ViewDetails(ruleId) {
+        var rule = GetSelectedRule(ruleId);
+        var bRuleHeading = document.getElementById('bRuleHeading');
+        var spnOrgId = document.getElementById('spnOrgId');
+        var spnOrgName = document.getElementById('spnOrgName');
+        var aOrgWebsite = document.getElementById('aOrgWebsite');
+        var spnChapter = document.getElementById('spnChapter');
+        var spnSubChapter = document.getElementById('spnSubChapter');
+        var spnPromType = document.getElementById('spnPromType');
+        var spnPromAction = document.getElementById('spnPromAction');
+        var spnPromEffDate = document.getElementById('spnPromEffDate');
+        var spnPromTermDate = document.getElementById('spnPromTermDate');
+        var spnPublicCommentTerm = document.getElementById('spnPublicCommentTerm');
+        var spnPublicCommentEffDate = document.getElementById('spnPublicCommentEffDate');
+        var spnPublicCommentTermDate = document.getElementById('spnPublicCommentTermDate');
+        var spnPromFileDate = document.getElementById('spnPromFileDate');
+        var spnCommentDate = document.getElementById('spnCommentDate');
+        var spnNoticeDate = document.getElementById('spnNoticeDate');
+
+        bRuleHeading.innerText = rule.reg_heading;
+        spnOrgId.innerText = rule.org_id;
+        spnOrgName.innerText = rule.org_name;
+        aOrgWebsite.href = 'http://' + rule.org_website;
+        aOrgWebsite.innerText = rule.org_website;
+        spnChapter.innerText = rule.chapter_name;
+        spnSubChapter.innerText = rule.subchapter_name;
+        spnPromType.innerText = rule.promulgation_type_desc;
+        spnPromAction.innerText = rule.promulgation_action_type_desc;
+        spnPromEffDate.innerText = rule.promu_reg_effective_date === null ? '' : rule.promu_reg_effective_date;
+        spnPromTermDate.innerText = rule.promu_reg_expiration_date === null ? '' : rule.promu_reg_expiration_date;
+        spnPublicCommentTerm.innerText = rule.public_comment_term_type_desc;
+        spnPublicCommentEffDate.innerText = rule.pub_com_term_start_date === null ? '' : rule.pub_com_term_start_date;
+        spnPublicCommentTermDate.innerText = rule.pub_com_term_end_date === null ? '' : rule.pub_com_term_end_date;
+        spnPromFileDate.innerText = rule.promu_reg_filing_notice_date === null ? '' : rule.promu_reg_filing_notice_date;
+        spnCommentDate.innerText = rule.comment_date === null ? '' : rule.comment_date;
+        spnNoticeDate.innerText = rule.notice_date === null ? '' : rule.notice_date;
+        $('#mdlOrgRule').modal();
+
+    }
+
+    function GetSelectedRule(ruleId) {
+        for (var i = 0; i < ruleData.length; i++) {
+            if (ruleData[i].Id === parseInt(ruleId)) {
+                return ruleData[i];
+            }
+        }
+    }
+
+    function SelectPage(pageVal) {
+        var txtPageNumber = document.getElementById('txtPageNumber');
+        var oldPageNumber = txtPageNumber.value;
+
+        txtPageNumber.value = pageVal + 1;
+        if (!ChangePage()) {
+            txtPageNumber.value = oldPageNumber;
+            pageNum = oldPageNumber - 1;
+        }
+    }
+
+    function ChangePage() {
+        var txtPageNumber = document.getElementById('txtPageNumber');
+        var pageNumValue = parseInt(txtPageNumber.value);
+
+        numPages = GetNumPages();
+
+        if (pageNumValue > 0 && pageNumValue - 1 < numPages) {
+            pageNum = pageNumValue - 1;
+            SetupWorkingList();
+            RenderData();
+            return true;
+        }
+
+        return false;
+    }
+
+    function PageSizeChange(ctl) {
+        var newPageSize = parseInt(ctl.value);
+        var txtPageNumber = document.getElementById('txtPageNumber');
+
+        pageSize = newPageSize;
+        pageNum = 0;
+        txtPageNumber.value = 1;
+        SetupWorkingList();
+        RenderData();
+    }
+
+    function GetNumPages() {
+        return workingRuleData.length % pageSize === 0 ? parseInt(workingRuleData.length / pageSize) : parseInt(workingRuleData.length / pageSize) + 1;
+    }
+
+    function BindTableScroll() {
+        var $th = $('.table-responsive').find('thead', 'th');
+
+        $('.table-responsive').on('scroll', function () {
+            $th.css('transform', 'translateY(' + this.scrollTop + 'px)');
+        });
+    }
+
+    String.prototype.Has = function (str) {
+        var returnValue = false;
+
+        if (this.indexOf(str) !== -1) {
+            returnValue = true;
+        }
+
+        return returnValue;
+    }
+</script>
